@@ -18,7 +18,6 @@ Rules:
         * EX: provider-abc, provider-pqr, provider-xyz
         * Validate input contact id based on provider's given format
     * Skeleton design should support each provider having seperate validation
-        * 
     * Should implement reasonable responses to each request
 
 Design:
@@ -44,7 +43,7 @@ app.use(express.json({extended: false}))
 
 app.get('/', (req, res) => res.send('API Running!'))
 
-// Define routes
+// Define route
 app.use('/api/registrar', require('./routes/api/registrar'))
 
 app.listen(5000, () => console.log('Server started on port 5000'))

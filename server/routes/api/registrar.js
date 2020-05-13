@@ -119,6 +119,10 @@ Request:
 Response:
     * Domain Name
     * Domain Expiration Date
+
+Assumptions Made:
+    We will always recieve a unique domain name that isn't currently
+    registered.
 */
 router.post('/', [
     check('name').isLength({ min: 10}),
@@ -198,7 +202,11 @@ Renewing a Domain Name
         * Domain Name
         * Domain Expiration Date
 */
-router.put('/',async (req, res) => {
+router.put('/', [
+    check('name').isLength({ min: 10}),
+    check('reg').not().isEmpty(),
+],
+async (req, res) => {
     try {
 
         // Assumption made that renewals use the period starting
@@ -221,7 +229,10 @@ Getting Info on a Domain Name
         * Domain Name
         * Domain Expiration Date
 */
-router.get('/',async (req, res) => {
+router.get('/',[
+    check('name').isLength({min: 10}),
+],
+async (req, res) => {
     try {
 
     }
@@ -241,9 +252,23 @@ Deleting a Domain Name
     Response:
         * N/A (only response code)
 */
-router.delete('/',async (req, res) => {
+router.delete('/',[
+    check('name').isLength({min: 10}),
+],
+async (req, res) => {
     try {
-
+        // Try to find the record in our 'database'
+        const index = domains.findIndex((element) => 
+            (element.name.localeCompare(req.name) == 0)
+        )
+        // Check if we found it
+        if (index === -1) {
+            // Couldn't find the record
+            return res.status(404).json({errors: [{msg: 'Domain not found.'}]})
+        }
+        // We found it, remove it from our 'database'
+        domains.splice(index, 1)
+        return res.status(204).send('Domain deleted.')
     }
     catch (error) {
         console.error('Issue with Deleting an existing domain')
