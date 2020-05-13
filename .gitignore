@@ -1,8 +1,4 @@
 .env
 node_modules/
-utility/apiresults.json
-utility/test.json
 *.code-workspace
-keys/
-Database/
 package-lock.json
