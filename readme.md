@@ -1,3 +1,5 @@
+Steffan Achtmann
+
 To use this project:
 
 Enter the /server folder and run "npm install" for dependancies.

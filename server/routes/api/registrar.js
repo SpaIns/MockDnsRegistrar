@@ -16,10 +16,12 @@ const {check, validationResult} = require('express-validator')
 
 const router = express.Router()
 
-// Our database for test purposes
+// Our 'database' for test purposes
 const domains = []
 
 // Sample list of valid providers
+// Assumption made that while a real provider list will have 15 providers,
+// this mockup server can get by with 3 for demo purposes
 const providers = [
     'providerabc',
     'providerpqr',
@@ -39,6 +41,8 @@ const validPeriods = [
     'month',
     'day'
 ]
+
+// Non-Routing Functions
 
 // Given a registration period and value,
 // return the expiration date
@@ -95,6 +99,8 @@ const addYears = (curDate, years) => {
     return curDate
 }
 
+
+// Routing Functions
 
 // @route  POST api/registrar
 // @desc   Register a Domain
@@ -201,6 +207,12 @@ Renewing a Domain Name
     Response:
         * Domain Name
         * Domain Expiration Date
+
+Assumptions Made:
+    Domains are unique
+    Renewals use the period starting from today
+    We can renew to a time that's earlier than the original
+        expiration date.
 */
 router.put('/', [
     check('name').isLength({ min: 10}),
@@ -208,10 +220,37 @@ router.put('/', [
 ],
 async (req, res) => {
     try {
+        // Try to find the record in our 'database'
+        const index = domains.findIndex((element) => 
+            (element.name.localeCompare(req.name) == 0)
+        )
+        // Check if we found it
+        if (index === -1) {
+            // Couldn't find the record
+            return res.status(404).json({errors: [{msg: 'Domain not found.'}]})
+        }
+        // We found it, now let's validate the registration period
 
-        // Assumption made that renewals use the period starting
-        // from today, as if the domain was being created
-        // for the first time
+        // Deconstruct the registration period
+        const {
+            value,
+            period,
+        } = reg
+        // Check that we have a period, reasonable value, and that the period is one we recognize
+        if (!period || !value || value <= 0 || !validPeriods.includes(period)) {
+            return res.status(400).json({errors: [{msg: 'Invalid registration period provided.'}]})
+        }
+
+        // We can simply update the registration period now
+        domains[index].expireDate = getExpireDate(reg)
+
+        // Return the required response
+        const responseObject = {
+            name: domains[index].name,
+            expireDate: domains[index].expireDate,
+        }
+
+        return res.json(responseObject)
     }
     catch (error) {
         console.error('Issue with Renewing an existing domain')
@@ -228,13 +267,39 @@ Getting Info on a Domain Name
     Response:
         * Domain Name
         * Domain Expiration Date
+
+Assumptions Made:
+    Domains are unique
 */
 router.get('/',[
     check('name').isLength({min: 10}),
 ],
 async (req, res) => {
     try {
+        // Try to find the record in our 'database'
+        const index = domains.findIndex((element) => 
+            (element.name.localeCompare(req.name) == 0)
+        )
+        // Check if we found it
+        if (index === -1) {
+            // Couldn't find the record
+            return res.status(404).json({errors: [{msg: 'Domain not found.'}]})
+        }
+        // We found it, return the required information
+        // Deconstruct the object at the found index
+        const {
+            name,
+            expireDate,
+            customer
+        } = domains[index]
 
+        // Create our response object
+        const responseObject = {
+            name: name,
+            expireDate: expireDate,
+        }
+
+        return res.json(responseObject)
     }
     catch (error) {
         console.error('Issue with Getting domain information.')
@@ -251,6 +316,9 @@ Deleting a Domain Name
         * Domain Name
     Response:
         * N/A (only response code)
+
+Assumptions Made;
+    Domains are unique
 */
 router.delete('/',[
     check('name').isLength({min: 10}),
