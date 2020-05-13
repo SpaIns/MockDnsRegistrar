@@ -41,9 +41,11 @@ const app = express()
 
 app.use(express.json({extended: false}))
 
+// Setup the API
 app.get('/', (req, res) => res.send('API Running!'))
 
 // Define route
 app.use('/api/registrar', require('./routes/api/registrar'))
 
+// Start the server
 app.listen(5000, () => console.log('Server started on port 5000'))

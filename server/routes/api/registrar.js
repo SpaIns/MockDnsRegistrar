@@ -30,9 +30,9 @@ const providers = [
 
 // Our list of providers' validators. In real code, this could be functions
 const providerValidations = {
-        providerabc : (domain) => { return false},
-        providerpqr : (domain) => { return true},
-        providerxyz : (domain) => { return true},
+    'providerabc' : (domain) => {return false},
+    'providerpqr' : (domain) => { return true},
+    'providerxyz' : (domain) => { return true},
 }
 
 // Our list of valid domain registration renewal periods
@@ -59,7 +59,7 @@ const getExpireDate = (reg) => {
     else if (period.localeCompare('month') == 0) {
         return addMonths(new Date(), value)
     }
-    else if (period.localeCompare('days') == 0) {
+    else if (period.localeCompare('day') == 0) {
         return addDays(new Date(), value)
     }
     else {
@@ -136,6 +136,11 @@ router.post('/', [
     check('reg').not().isEmpty(),
     check('customerId').not().isEmpty()
 ], async (req, res) => {
+    const validationErrors = validationResult(req)
+    if (!validationErrors.isEmpty()) {
+        // Failed a validation check, return our errors.
+        return res.status(400).json({errors: validationErrors.array()})
+    }
     try {
         // Deconstruct our request body
         const {
@@ -153,7 +158,9 @@ router.post('/', [
             return res.status(400).json({errors: [{msg: 'Invalid provider.'}]})
         }
         // If we have a valid provider, we must validate against the provider
-        if (!(providerValidations.provider)(name)) {
+        const validationFunc = providerValidations[provider]
+        console.log('func is: ' + validationFunc)
+        if (!validationFunc(name)) {
             // Provider failed to validate our domain
             return res.status(406).json({errors: [{msg: 'Provider failed to validate.'}]})
         }
@@ -165,6 +172,7 @@ router.post('/', [
             value,
             period,
         } = reg
+        console.log('checking period')
         // Check that we have a period, reasonable value, and that the period is one we recognize
         if (!period || !value || value <= 0 || !validPeriods.includes(period)) {
             return res.status(400).json({errors: [{msg: 'Invalid registration period provided.'}]})
@@ -177,6 +185,7 @@ router.post('/', [
             customer: customerId,
         }
 
+        console.log('about to push')
         domains.push(registeredDomain)
 
         const responseObject = {
@@ -184,6 +193,7 @@ router.post('/', [
             expireDate: registeredDomain.expireDate,
         }
 
+        console.log('Posting response')
         // Return the valid domain results minus the customer id
         return res.json(responseObject)
     }
@@ -219,6 +229,11 @@ router.put('/', [
     check('reg').not().isEmpty(),
 ],
 async (req, res) => {
+    const validationErrors = validationResult(req)
+    if (!validationErrors.isEmpty()) {
+        // Failed a validation check, return our errors.
+        return res.status(400).json({errors: validationErrors.array()})
+    }
     try {
         // Try to find the record in our 'database'
         const index = domains.findIndex((element) => 
@@ -275,6 +290,11 @@ router.get('/',[
     check('name').isLength({min: 10}),
 ],
 async (req, res) => {
+    const validationErrors = validationResult(req)
+    if (!validationErrors.isEmpty()) {
+        // Failed a validation check, return our errors.
+        return res.status(400).json({errors: validationErrors.array()})
+    }
     try {
         // Try to find the record in our 'database'
         const index = domains.findIndex((element) => 
@@ -324,6 +344,11 @@ router.delete('/',[
     check('name').isLength({min: 10}),
 ],
 async (req, res) => {
+    const validationErrors = validationResult(req)
+    if (!validationErrors.isEmpty()) {
+        // Failed a validation check, return our errors.
+        return res.status(400).json({errors: validationErrors.array()})
+    }
     try {
         // Try to find the record in our 'database'
         const index = domains.findIndex((element) => 
