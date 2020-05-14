@@ -7,8 +7,17 @@ with test frameworks and am just trying to use what I know to
 meet the project requirements without spending the project time
 estimation on learning a test framework alone.
 
+Due to this, and the async nature of axios, the call responses
+will be after every call has been executed.  I tried to work around
+this, but to be completely frank, JS and concurrency aren't things
+I work with often, so I wasn't able to get it to act as I wanted.
+Sometimes the tests function as intended, other times the concurrent
+nature of the calls means that we may try to call delete, put, or get
+requests before the initial object has been posted to the 'database'.
+
 Please run the server before calling this file.
-You can run the server using the command "npm run server"
+You can run the server using the command "npm run server" or
+"npm run start"
 */
 const axios = require('axios')
 
@@ -27,14 +36,14 @@ However, that couples all the tests together very strongly.
 In this demo, it's not a big deal, but if we were to expand this
 out, said structure would likely not last as long.
 */
-const postTests = () => {
+const postTests = async () => {
     console.log('Testing Post Requests')
-    shouldAllowValidPost()
-    invalidRequestPost()
-    missingBodyComponentsPost()
+    await shouldAllowValidPost()
+    await invalidRequestPost()
+    await missingBodyComponentsPost()
 }
 
-const shouldAllowValidPost = () => {
+const shouldAllowValidPost = async () => {
     console.log('This POST request should return valid')
     const body = {
         name: 'somenamevalue',
@@ -83,7 +92,7 @@ const shouldAllowValidPost = () => {
 // The request itself will return invalid. The root cause is the provider
 // In a more stringent test framework, we could have tests like this for
 // every part of the body that is validated in some form
-const invalidRequestPost = () => {
+const invalidRequestPost = async () => {
     console.log('This POST request should return invalid')
     const body = {
         name: 'somenamevalue',
@@ -125,7 +134,7 @@ const invalidRequestPost = () => {
 
 // This request will also return invalid. The root cause is the body is missing
 // a required object (provider here).
-const missingBodyComponentsPost = () => {
+const missingBodyComponentsPost = async () => {
     console.log('This POST request should return invalid 2')
     const body = {
         name: 'somenamevalue',
@@ -167,11 +176,11 @@ const missingBodyComponentsPost = () => {
 /*
 Test function for testing valid and invalid PUT requests
 */
-const putTests = () => {
+const putTests = async () => {
     console.log('Testing Put Requests')
-    validPut()
+    await validPut()
 }
-const validPut = () => {
+const validPut = async () => {
     console.log('This PUT request should return valid.')
     const body = {
         name: 'somenamevalue',
@@ -212,12 +221,12 @@ const validPut = () => {
 /*
 Test function for testing valid and invalid GET requests
 */
-const getTests = () => {
+const getTests = async () => {
     console.log('Testing Get Requests')
-    validGet()
+    await validGet()
 }
 
-const validGet = () => {
+const validGet = async () => {
     console.log('This GET request should return valid.')
     
     const body = {
@@ -256,12 +265,12 @@ const validGet = () => {
 /*
 Test function for testing valid and invalid DELETE requests
 */
-const deleteTests = () => {
+const deleteTests = async () => {
     console.log('Testing Delete Requests')
-    validDelete()
+    await validDelete()
 }
 
-const validDelete = () => {
+const validDelete = async () => {
     console.log('This DELETE request should return valid.')
     const body = {
         name: 'somenamevalue',
@@ -281,7 +290,27 @@ const validDelete = () => {
 }
 
 
-postTests()
-putTests()
-getTests()
-deleteTests()
+// For running all our tests - it was meant to run the async axios
+// functions in a way that the order of the tests was kept, but
+// it didn't quite work out.  If whoever reviews this wants to
+// let me know how this actually could work (whether you move on with
+// me as a candidate or not), I'd appreciate it!
+const main = async () => {
+    try {
+        const tests = [
+            postTests,
+            putTests,
+            getTests,
+            deleteTests,
+        ]
+
+        tests.map(async test => {
+            return await test()
+        })
+    }
+    catch (error) {
+        console.log('An unexpected error occured during tests.')
+    }
+}
+
+main()

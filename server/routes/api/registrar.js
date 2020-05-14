@@ -71,32 +71,18 @@ const getExpireDate = (reg) => {
 }
 
 // Helper functions to add time to current date
-// Shamelessly copied from 
-// https://stackoverflow.com/questions/1197928/how-to-add-30-minutes-to-a-javascript-date-object
 const addDays = (curDate, days) => {
     curDate.setDate(curDate.getDate() + days);
     return curDate;
 }
 
 const addMonths = (curDate, months) => {
-    curDate.setMonth(curDate.getMonth() + months)
-    const newDate = new Date()
-
-    if (newDate !== curDate) {
-        return addDays(curDate, -curDate)
-    }
-
+    curDate.setMonth(curDate.getMonth()+months)
     return curDate
 }
 
 const addYears = (curDate, years) => {
     curDate.setFullYear(curDate.getFullYear() + years)
-
-    const newDate = new Date()
-
-    if (newDate !== curDate) {
-        return addDays(curDate, -curDate)
-    }
     return curDate
 }
 
@@ -160,7 +146,6 @@ router.post('/', [
         }
         // If we have a valid provider, we must validate against the provider
         const validationFunc = providerValidations[provider]
-        console.log('func is: ' + validationFunc)
         if (!validationFunc(name)) {
             // Provider failed to validate our domain
             return res.status(406).json({errors: [{msg: 'Provider failed to validate.'}]})
@@ -173,7 +158,6 @@ router.post('/', [
             value,
             period,
         } = reg
-        console.log('checking period')
         // Check that we have a period, reasonable value, and that the period is one we recognize
         if (!period || !value || value <= 0 || !validPeriods.includes(period)) {
             return res.status(400).json({errors: [{msg: 'Invalid registration period provided.'}]})
@@ -186,7 +170,6 @@ router.post('/', [
             customer: customerId,
         }
 
-        console.log('about to push')
         domains.push(registeredDomain)
 
         const responseObject = {
@@ -236,7 +219,6 @@ async (req, res) => {
         return res.status(400).json({errors: validationErrors.array()})
     }
     try {
-        console.log('Putting')
         // Try to find the record in our 'database'
         const index = domains.findIndex((element) => 
             (element.name.localeCompare(req.body.name) == 0)
@@ -252,14 +234,15 @@ async (req, res) => {
         const {
             value,
             period,
-        } = reg
+        } = req.body.reg
+
         // Check that we have a period, reasonable value, and that the period is one we recognize
         if (!period || !value || value <= 0 || !validPeriods.includes(period)) {
             return res.status(400).json({errors: [{msg: 'Invalid registration period provided.'}]})
         }
 
         // We can simply update the registration period now
-        domains[index].expireDate = getExpireDate(reg)
+        domains[index].expireDate = getExpireDate(req.body.reg)
 
         // Return the required response
         const responseObject = {
@@ -267,6 +250,7 @@ async (req, res) => {
             expireDate: domains[index].expireDate,
         }
 
+        console.log('Updated a domain')
         return res.json(responseObject)
     }
     catch (error) {
@@ -298,12 +282,10 @@ async (req, res) => {
         return res.status(400).json({errors: validationErrors.array()})
     }
     try {
-        console.log('Getting')
         // Try to find the record in our 'database'
         const index = domains.findIndex((element) => 
             (element.name.localeCompare(req.body.name) === 0)
         )
-        console.log('index ' + index)
         // Check if we found it
         if (index === -1) {
             // Couldn't find the record
@@ -323,6 +305,7 @@ async (req, res) => {
             expireDate: expireDate,
         }
 
+        console.log('Got a domain')
         return res.json(responseObject)
     }
     catch (error) {
@@ -354,7 +337,6 @@ async (req, res) => {
         return res.status(400).json({errors: validationErrors.array()})
     }
     try {
-        console.log('Deleting')
         // Try to find the record in our 'database'
         const index = domains.findIndex((element) => 
             (element.name.localeCompare(req.body.name) == 0)
@@ -366,6 +348,8 @@ async (req, res) => {
         }
         // We found it, remove it from our 'database'
         domains.splice(index, 1)
+
+        console.log('Deleted a domain')
         return res.status(204).send('Domain deleted.')
     }
     catch (error) {
