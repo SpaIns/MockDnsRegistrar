@@ -28,9 +28,10 @@ const providers = [
     'providerxyz'
 ]
 
-// Our list of providers' validators. In real code, this could be functions
+// Our list of providers' validators. In real code, this would point to
+// real functions that would return validation status, rather than hardcoded values
 const providerValidations = {
-    'providerabc' : (domain) => {return false},
+    'providerabc' : (domain) => { return false},
     'providerpqr' : (domain) => { return true},
     'providerxyz' : (domain) => { return true},
 }
@@ -235,9 +236,10 @@ async (req, res) => {
         return res.status(400).json({errors: validationErrors.array()})
     }
     try {
+        console.log('Putting')
         // Try to find the record in our 'database'
         const index = domains.findIndex((element) => 
-            (element.name.localeCompare(req.name) == 0)
+            (element.name.localeCompare(req.body.name) == 0)
         )
         // Check if we found it
         if (index === -1) {
@@ -296,10 +298,12 @@ async (req, res) => {
         return res.status(400).json({errors: validationErrors.array()})
     }
     try {
+        console.log('Getting')
         // Try to find the record in our 'database'
         const index = domains.findIndex((element) => 
-            (element.name.localeCompare(req.name) == 0)
+            (element.name.localeCompare(req.body.name) === 0)
         )
+        console.log('index ' + index)
         // Check if we found it
         if (index === -1) {
             // Couldn't find the record
@@ -350,9 +354,10 @@ async (req, res) => {
         return res.status(400).json({errors: validationErrors.array()})
     }
     try {
+        console.log('Deleting')
         // Try to find the record in our 'database'
         const index = domains.findIndex((element) => 
-            (element.name.localeCompare(req.name) == 0)
+            (element.name.localeCompare(req.body.name) == 0)
         )
         // Check if we found it
         if (index === -1) {
